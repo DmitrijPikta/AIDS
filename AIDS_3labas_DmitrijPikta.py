@@ -1,7 +1,5 @@
 class Node:
-    def __init__(self, level=None, dad_index=None, key1=None, key2=None):
-        #self.dad_index = dad_index
-        #self.level = level
+    def __init__(self, key1=None, key2=None):
         self.key1 = key1
         self.key2 = key2
         self.key3 = None
@@ -68,7 +66,7 @@ def balance(Tree: list, key: int) -> None:
     branch[result[1][-1] + 1][0].key3 = None
 
     # making new Node for moving_element_side in right side of Node where were 3 keys
-    branch.insert(result[1][-1] + 2, [Node(None, None, moving_element_side)])
+    branch.insert(result[1][-1] + 2, [Node(moving_element_side)])
 
     # if where are 4 children
     if len(branch[result[1][-1] + 1]) == 5:
@@ -107,7 +105,7 @@ def balance(Tree: list, key: int) -> None:
 def insert_tree(Tree: list, key: int) -> bool:
     # if Tree is emplty
     if len(Tree) == 0:
-        Tree.append(Node(None, None, key))
+        Tree.append(Node(key))
 
     # If key is one of Node keys
     if Tree[0].key1 == key or Tree[0].key2 == key:
@@ -171,6 +169,33 @@ def delete(Tree: list, key: int, result: list = None) -> None:
     if result is None:
         return
     
+    # Special case: key is in root node
+    if len(result[1]) == 0:
+        # If root is a leaf
+        if len(Tree) == 1:
+            # If root has two keys
+            if Tree[0].key2 is not None:
+                if Tree[0].key1 == key:
+                    Tree[0].key1 = Tree[0].key2
+                    Tree[0].key2 = None
+                elif Tree[0].key2 == key:
+                    Tree[0].key2 = None
+            else:
+                # Only one key, just remove it
+                Tree[0].key1 = None
+            return
+        # if key is at first root key
+        if Tree[0].key1 == key:
+            # swap key for deleting with min right child
+            Tree[0].key1, Tree[2][0].key1 = Tree[2][0].key1, Tree[0].key1
+            result[1].append(1)
+        # if key is at second root key
+        else:
+            # swap key for deleting with min right child
+            Tree[0].key2, Tree[3][0].key1 = Tree[3][0].key1, Tree[0].key2
+            result[1].append(2)
+        return delete(Tree, key, result)
+        
     branch = Tree
     # make branch list of parent and children, where one of children is key for deletion
     for i in range(len(result[1]) - 1):
@@ -205,7 +230,8 @@ def delete(Tree: list, key: int, result: list = None) -> None:
             # swap key for deleting with min right child
             branch[result[1][-1] + 1][0].key2, branch[result[1][-1] + 1][3][0].key1 = branch[result[1][-1] + 1][3][0].key1, branch[result[1][-1] + 1][0].key2
             result[1].append(2)
-        delete(Tree, key, result)
+        return delete(Tree, key, result)
+        
         
 
 
@@ -258,9 +284,9 @@ def fix_underfull(Tree: list, path_to_underfull: list) -> None:
                 # move key from children where were 2 keys to underfull children
                 branch[2][0].key1 = branch[1][0].key2
                 branch[1][0].key2 = None
-
                 # swap moved key with parent key
                 branch[2][0].key1, branch[0].key1 = branch[0].key1, branch[2][0].key1
+                #return
             else:
                 branch[3][0].key1 = branch[0].key2
                 branch[0].key2 = branch[2][0].key1
@@ -328,7 +354,6 @@ def fix_underfull(Tree: list, path_to_underfull: list) -> None:
         else:
             # parent Node is empty now
             branch[0].key1 = None
-            print("Parent Node is empty")
             # make path to child
             path_to_underfull[1].pop()
             #path_to_underfull[1].append(0)
@@ -336,14 +361,18 @@ def fix_underfull(Tree: list, path_to_underfull: list) -> None:
 
 
 def move_child_to_uncle(Tree: list, path_to_child: list) -> None:
-    print(path_to_child)
+    # if where are no uncle
+    if len(path_to_child[1]) == 0:
+        Tree[0] = Tree[1][0]
+        Tree.pop()
+        return
 
     # make branch list of children, parents and grandparents
     branch = Tree
     if len(path_to_child[1]) > 2:
         for i in range(len(path_to_child[1]) - 2):
             branch = branch[path_to_child[1][i] + 1]
-    
+
     # if moving child's parent is first
     if path_to_child[1][-1] == 0:
         # move child to uncle 
@@ -355,7 +384,7 @@ def move_child_to_uncle(Tree: list, path_to_child: list) -> None:
             branch[1][0].key1, branch[1][0].key2 = branch[0].key1, branch[1][0].key1
             branch[0].key1 = branch[0].key2
             branch[0].key2 = None
-            return
+
         # move key from grandparent if uncle have 2 key
         else:
             branch[1][0].key1, branch[1][0].key2, branch[1][0].key3 = branch[0].key1, branch[1][0].key1, branch[1][0].key2
@@ -376,7 +405,7 @@ def move_child_to_uncle(Tree: list, path_to_child: list) -> None:
             branch[1][0].key2 = branch[0].key1
             branch[0].key1 = branch[0].key2
             branch[0].key2 = None
-            return
+           
         # move key from grandparent if uncle have 2 key
         else:
             branch[1][0].key3 = branch[0].key1
@@ -396,7 +425,7 @@ def move_child_to_uncle(Tree: list, path_to_child: list) -> None:
         if branch[2][0].key2 is None:
             branch[2][0].key2 = branch[0].key2
             branch[0].key2 = None
-            return
+           
         # move key from grandparent if uncle have 2 key
         else:
             branch[2][0].key3 = branch[0].key2
@@ -404,63 +433,32 @@ def move_child_to_uncle(Tree: list, path_to_child: list) -> None:
             print_tree(Tree)
             # now uncle have 3 keys, so call balance
             balance(Tree, branch[2][0].key2)
-        
-
-
-
-
-
     
-                
-                
+    # if root is None
+    if Tree[0].key1 is None:
+        Tree[:] = Tree[1]
+
+           
 
 
 
 # Training 
-TwoThreeTree = [Node(0, 0, 50, 90), [Node(1, 0, 20), [Node(2, 0, 10)], [Node(2, 1, 30, 40)]], [Node(1, 1, 70), [Node(2, 2, 60)], [Node(2, 3, 80)]], [Node(1, 2, 120, 150), [Node(2, 4, 100, 110)], [Node(2, 5, 130, 140)], [Node(2, 6, 160)]]]
+TwoThreeTree = [Node(50, 90), [Node(20), [Node(10)], [Node(30, 40)]], [Node(70), [Node(60)], [Node(80)]], [Node(120, 150), [Node(100, 110)], [Node(130, 140)], [Node(160)]]]
 
-# print(search(TwoThreeTree, 30))
+print_tree(TwoThreeTree)
+
 insert_with_balancing(TwoThreeTree, 65)
 insert_with_balancing(TwoThreeTree, 75)
 insert_with_balancing(TwoThreeTree, 85)
 insert_with_balancing(TwoThreeTree, 15)
 insert_with_balancing(TwoThreeTree, 25)
-# search(TwoThreeTree, 135)
-#print(search(TwoThreeTree, 135))
-#balance(TwoThreeTree, 135)
-# print(TwoThreeTree[2][1][0].key1)
-#print_tree(TwoThreeTree)
 
-Tree1 = []
-insert_with_balancing(Tree1, 10)
-insert_with_balancing(Tree1, 15)
-insert_with_balancing(Tree1, 20)
-insert_with_balancing(Tree1, 5)
-insert_with_balancing(Tree1, 1)
-insert_with_balancing(Tree1, 100)
-insert_with_balancing(Tree1, 7)
-insert_with_balancing(Tree1, 106)
-
-Tree1 = TwoThreeTree
-print_tree(Tree1)
-delete(Tree1, 110)
-delete(Tree1, 140)
-delete(Tree1, 130)
-delete(Tree1, 120)
-print_tree(Tree1)
-delete(Tree1, 160)
-#delete(Tree1, 40)
-print_tree(Tree1)
-
-#delete(Tree1, 60)
-# delete(Tree1, 40)
-# delete(Tree1, 30)
-# print_tree(Tree1)
+print_tree(TwoThreeTree)
 
 
-#print(search(TwoThreeTree, 5000))
 
-#--------------------
-tree = []
-insert_tree(tree, 10)
-#delete(tree, 10)
+
+
+
+
+
