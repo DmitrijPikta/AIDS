@@ -83,15 +83,17 @@ def Get_path(graph) -> list:
     while queue:
         n = queue.pop(0)
 
+        # If we've reached last vertex, reconstruct the path
         if n == len(graph)-1:
             path = []
             while n is not None:
-                path.append(n)
-                n = parent[n]
+                path.append(n)  # Add current node to path
+                n = parent[n]   # Move to parent node
             return path[::-1]
         
         counter = 0
         for i in graph[n]:
+            # If there is available capacity and the vertex is not visited
             if i != 0 and not visited[counter]:
                 queue.append(counter)
                 visited[counter] = True
@@ -102,9 +104,6 @@ def Get_path(graph) -> list:
 
 
 def EdmondsKarp_algorithm(graph) -> int:
-    for i in range(0, len(graph)):
-        pass
-    
     max_flow = 0
     while True:
         path = Get_path(graph)
